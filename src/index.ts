@@ -2,6 +2,12 @@ import fastify from 'fastify'
 import cors from '@fastify/cors'
 import { insertLink, getLink, getAllLinks } from './database/queries'
 
+const dotenv = require('dotenv')
+
+dotenv.config()
+
+console.log(process.env.TEST)
+
 const BASEURL = 'http://20.115.121.2:3000/'
 interface IShortenUrl {
     url: string
