@@ -1,0 +1,21 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^4.9.3"
+  },
+  "scripts": {
+    "build:live": "nodemon /index.js",
+    "start": "tsc && node dist/index.js",
+    "dev": "node dist/index.js"
+  },
+  "dependencies": {
+    "@databases/pg": "^5.4.1",
+    "@databases/pg-typed": "^4.3.0",
+    "@fastify/cors": "^8.2.0",
+    "fastify": "^4.10.0",
+    "nodemon": "^2.0.20"
+  }
+}

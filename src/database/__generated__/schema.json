@@ -1,0 +1,21 @@
+[
+  {
+    "name": "links",
+    "columns": [
+      {
+        "name": "original_link",
+        "isNullable": true,
+        "hasDefault": false,
+        "typeId": 1043,
+        "typeName": "VARCHAR"
+      },
+      {
+        "name": "shortened_link",
+        "isNullable": true,
+        "hasDefault": false,
+        "typeId": 1043,
+        "typeName": "VARCHAR"
+      }
+    ]
+  }
+]
