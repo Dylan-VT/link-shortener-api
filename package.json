@@ -9,15 +9,19 @@
   "scripts": {
     "build:live": "nodemon /index.js",
     "start": "tsc && node dist/index.js",
-    "dev": "node dist/index.js"
+    "dev": "concurrently \"tsc -watch\" \"nodemon dist/index.js\""
   },
   "dependencies": {
     "@databases/pg": "^5.4.1",
     "@databases/pg-typed": "^4.3.0",
     "@fastify/cors": "^8.2.0",
+    "@types/bcrypt": "^5.0.0",
     "@types/node": "^18.11.9",
+    "bcrypt": "^5.1.0",
+    "concurrently": "^7.6.0",
     "dotenv": "^16.0.3",
     "fastify": "^4.10.0",
-    "nodemon": "^2.0.20"
+    "nodemon": "^2.0.20",
+    "ts-node": "^10.9.1"
   }
 }

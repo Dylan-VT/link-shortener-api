@@ -1,12 +1,12 @@
 import fastify from 'fastify'
 import cors from '@fastify/cors'
 import { insertLink, getLink, getAllLinks } from './database/queries'
-
+import { LoginBody, handlelogin } from './endpoints/login'
+import { CreateAccountBody, handleCreateAccount } from './endpoints/createAccount'
 const dotenv = require('dotenv')
 
 dotenv.config()
 
-console.log(process.env.TEST)
 
 const BASEURL = 'http://20.115.121.2:3000/'
 interface IShortenUrl {
@@ -31,7 +31,7 @@ const server = fastify({
 server.register(cors, {})
 
 server.get('/ping', async (request, response) => {
-    return 'pog\n'
+    return 'pogg\n'
 })
 
 //redirect to shortened url
@@ -71,6 +71,24 @@ server.post<{Querystring: IShortenUrl}>('/shorten', async (request, response) =>
 })
 
 
+server.post<{Body: LoginBody}>('/login', async (request, response) => {
+    // call handle login with request information
+    handlelogin(request.body)
+})
+
+server.post<{Body: CreateAccountBody}>('/createaccount', async (request, response) => {
+    //set email and username to lower
+    const email = request.body.email.toLowerCase()
+    const username = request.body.username.toLowerCase()
+
+
+    await handleCreateAccount({email: email, username: username, password: request.body.password})
+    .then(res => {
+        response.code(res.statusCode)
+        response.send({statusMessage: res.statusMessage})
+    })
+    
+})
 
 
 server.listen({host:'0.0.0.0', port: 8080 }, (err, address) => {
