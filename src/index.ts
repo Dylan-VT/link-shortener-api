@@ -3,7 +3,11 @@ import cors from '@fastify/cors'
 import { insertLink, getLink, getAllLinks } from './database/queries'
 import { LoginBody, handlelogin } from './endpoints/login'
 import { CreateAccountBody, handleCreateAccount } from './endpoints/createAccount'
+import request from '@fastify/session'
 const dotenv = require('dotenv')
+const fastifySession = require('@fastify/session');
+const fastifyCookie = require('@fastify/cookie')
+
 
 dotenv.config()
 
@@ -11,7 +15,8 @@ dotenv.config()
 const BASEURL = 'http://20.115.121.2:3000/'
 interface IShortenUrl {
     url: string
-  }
+}
+
 
 interface IRequestUrl {
     shortened_url: string
@@ -28,10 +33,35 @@ const server = fastify({
     logger: true
 })
 
-server.register(cors, {})
+// setup cors, allow credientials for session management
+server.register(cors, {
+    origin: "http://localhost:3000",
+    credentials: true
+})
+
+
+server.register(fastifyCookie);
+server.register(fastifySession, {
+    secret: 'djiajidwannjeq2319daweqiundaoiw7@*#)(*dawo',
+    cookie: {
+        secure: false,
+        maxAge: 1800000
+    }
+});
+
+declare module "fastify" {
+    interface Session {
+        user: string
+    }
+}
+
+//gets cookies for a user. this is a test endpoint
+server.get('/getcookies', async (request, response) => {
+    return {session: request.session, user: {loggedIn: request.session.get("loggedIn"), user: request.session.get("user")}}
+})
 
 server.get('/ping', async (request, response) => {
-    return 'pogg\n'
+    return request.session.get("user") || "pog"
 })
 
 //redirect to shortened url
@@ -73,7 +103,15 @@ server.post<{Querystring: IShortenUrl}>('/shorten', async (request, response) =>
 
 server.post<{Body: LoginBody}>('/login', async (request, response) => {
     // call handle login with request information
-    handlelogin(request.body)
+    const loginResult = await handlelogin(request.body)
+    // if login result is true, set cookies
+    if (loginResult) {
+        console.log(0)
+        request.session.set("loggedIn", true)
+        request.session.set("user", request.body.username)
+    }
+    request.session.save()
+    console.log(request.session.sessionId)
 })
 
 server.post<{Body: CreateAccountBody}>('/createaccount', async (request, response) => {

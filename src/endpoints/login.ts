@@ -19,5 +19,5 @@ export const handlelogin = async (loginInfo: LoginBody) => {
     }
     const validLogin = await checkPassword(loginInfo.password, userAccount.password)
 
-    console.log(validLogin)
+    return validLogin
 }
