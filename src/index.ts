@@ -91,7 +91,7 @@ server.get<{Params: IRequestUrl}>('/url/:key', async (request, response) => {
 //gets links for a specific user
 server.get<{Params: IRequestUserLinks}>('/getlinks/:user', async (request, response) => {
     //read link params
-    const user = request.params.user
+    const user: string = request.params.user
     // verify user is valid and that user matches session user
     console.log(user)
     if (!user) {
