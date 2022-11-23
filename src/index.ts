@@ -1,9 +1,10 @@
 import fastify from 'fastify'
 import cors from '@fastify/cors'
-import { insertLink, getLink, getAllLinks } from './database/queries'
+import { insertLink, getLink, getAllLinks, getUserLinks, incrementVisits } from './database/queries'
 import { LoginBody, handlelogin } from './endpoints/login'
 import { CreateAccountBody, handleCreateAccount } from './endpoints/createAccount'
 import request from '@fastify/session'
+import { isConstructorDeclaration } from 'typescript'
 const dotenv = require('dotenv')
 const fastifySession = require('@fastify/session');
 const fastifyCookie = require('@fastify/cookie')
@@ -19,9 +20,12 @@ interface IShortenUrl {
 
 
 interface IRequestUrl {
-    shortened_url: string
+    key: string
 }
 
+interface IRequestUserLinks {
+    user: string
+}
 
 // generates a random string for shortening the url
 const generateRandomString = (length: number) => {
@@ -39,7 +43,7 @@ server.register(cors, {
     credentials: true
 })
 
-
+//setup sessions
 server.register(fastifyCookie);
 server.register(fastifySession, {
     secret: 'djiajidwannjeq2319daweqiundaoiw7@*#)(*dawo',
@@ -49,14 +53,14 @@ server.register(fastifySession, {
     }
 });
 
-declare module "fastify" {
-    interface Session {
-        user: string
-    }
-}
+
+server.get('/',async () => {
+    return "Welcome to the root. ( ͡° ͜ʖ ͡°)"
+})
 
 //gets cookies for a user. this is a test endpoint
 server.get('/getcookies', async (request, response) => {
+    console.log(request.session.sessionId)
     return {session: request.session, user: {loggedIn: request.session.get("loggedIn"), user: request.session.get("user")}}
 })
 
@@ -65,39 +69,65 @@ server.get('/ping', async (request, response) => {
 })
 
 //redirect to shortened url
-server.get<{Querystring: IRequestUrl}>('/url/:shortened_url', async (request, response) => {
+server.get<{Params: IRequestUrl}>('/url/:key', async (request, response) => {
     //strip input
-    const strippedShortenedUrl = request.url.substring(5)
+    const strippedShortenedUrl = request.params.key
     console.log(strippedShortenedUrl)
 
     // get the link from db
-    const redirect = await getLink(strippedShortenedUrl)
+    const redirect = await incrementVisits(strippedShortenedUrl)
     
     // if invalid don't redirect, otherwise redirect
-    if (redirect === null) {
+    if (!redirect) {
         console.log("Invalid Link")
     }
     else {
-        const originalURL = redirect.original_link
+        const originalURL = redirect.original_url
         console.log(originalURL)
-        response.redirect(originalURL!)
+        response.redirect(originalURL)
     }
+})
+
+//gets links for a specific user
+server.get<{Params: IRequestUserLinks}>('/getlinks/:user', async (request, response) => {
+    //read link params
+    const user = request.params.user
+    // verify user is valid and that user matches session user
+    console.log(user)
+    if (!user) {
+        return {error: "Invalid user"}
+    } 
+    else if (user !== request.session.get("user") || !request.session.get("loggedIn")) {
+        return {error: "Unauthorized access"}
+    }
+    console.log(request.session.get("user"))
+
+    const links = await getUserLinks(user)
+    
+    return links
 })
 
 //gets all inputs, be careful with this
 server.get('/getall', async () => {
     const result = await getAllLinks()
-    
+    console.log(result)
     return {links: result}
 })
 
 // method that takes a url and returns the shortened link
 server.post<{Querystring: IShortenUrl}>('/shorten', async (request, response) => {
+    //pre process data
+    const urlToShorten = request.query.url
+    var user = request.session.get("user") as string || ""
+    
     //generate random string and add to db
-    const random_string = generateRandomString(7)
-    await insertLink(random_string, request.query.url)
-
-    return BASEURL + random_string
+    const key = generateRandomString(7)
+    
+    //insert link and return result
+    const insertResult = await insertLink(user, key, urlToShorten)
+    
+    return insertResult
+    
 })
 
 
@@ -106,14 +136,16 @@ server.post<{Body: LoginBody}>('/login', async (request, response) => {
     const loginResult = await handlelogin(request.body)
     // if login result is true, set cookies
     if (loginResult) {
-        console.log(0)
         request.session.set("loggedIn", true)
         request.session.set("user", request.body.username)
+        request.session.save()
+        return {username: request.body.username}
+    } else {
+        response.statusCode = 401
     }
-    request.session.save()
-    console.log(request.session.sessionId)
 })
 
+//handles creating an account
 server.post<{Body: CreateAccountBody}>('/createaccount', async (request, response) => {
     //set email and username to lower
     const email = request.body.email.toLowerCase()
@@ -125,7 +157,10 @@ server.post<{Body: CreateAccountBody}>('/createaccount', async (request, respons
         response.code(res.statusCode)
         response.send({statusMessage: res.statusMessage})
     })
-    
+})
+//simply checks if a user is logged in
+server.get('/auth', async (request, response) => {
+    return {loggedIn: request.session.get("loggedIn") || false, username: request.session.get("user")}  
 })
 
 

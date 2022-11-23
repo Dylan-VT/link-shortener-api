@@ -3,14 +3,28 @@
     "name": "links",
     "columns": [
       {
-        "name": "original_link",
-        "isNullable": true,
+        "name": "key",
+        "isNullable": false,
         "hasDefault": false,
         "typeId": 1043,
         "typeName": "VARCHAR"
       },
       {
-        "name": "shortened_link",
+        "name": "num_visits",
+        "isNullable": true,
+        "hasDefault": true,
+        "typeId": 23,
+        "typeName": "INTEGER"
+      },
+      {
+        "name": "original_url",
+        "isNullable": false,
+        "hasDefault": false,
+        "typeId": 1043,
+        "typeName": "VARCHAR"
+      },
+      {
+        "name": "owner",
         "isNullable": true,
         "hasDefault": false,
         "typeId": 1043,

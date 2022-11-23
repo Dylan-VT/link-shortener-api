@@ -1,17 +1,15 @@
 import db, {links, users} from './database'
 import { sql } from './database'
-import { Users_InsertParameters } from './__generated__'
 
-export const insertLink = async (shortened_link: string, original_link: string) => {
-    const original_link_lower = original_link.toLowerCase()
-    console.log(0)
-    await links(db).insert({shortened_link, original_link: original_link_lower})
-    console.log(1)
+export const insertLink = async (owner: string, key: string, originalUrl: string) => {
+    const originalUrlLower = originalUrl.toLowerCase()
+    const linkEntry = await links(db).insert({owner: owner, key: key, original_url: originalUrlLower})
+    return linkEntry
 }
 
 
-export const getLink = async (shortened_link: string) => {
-    return await links(db).findOne({shortened_link: shortened_link})
+export const getLink = async (key: string) => {
+    return await links(db).findOne({key: key})
 }
 
 export const getAllLinks = async () => {
@@ -23,6 +21,24 @@ export const getAllLinks = async () => {
     .catch((err: any) => console.log(err))
 
     return res
+}
+
+export const getUserLinks = async (user: string) => {
+    return await links(db).find({owner: user}).all()
+} 
+
+//increments num_visits by 1
+export const incrementVisits = async (key: string) => {
+    //first get num_visits for link we're updating
+    const link = await getLink(key)
+    if (!link) {
+        return link
+    }
+    const originalVisits = link.num_visits
+    //originalVisits force casted to number since there is a default value in PG
+    const updatedLink = await links(db).update({key: key}, {num_visits: originalVisits! + 1})
+    //return first (hopefully only) updatedLink
+    return updatedLink[0]
 }
 
 interface user {

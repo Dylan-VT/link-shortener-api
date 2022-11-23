@@ -15,7 +15,7 @@ const checkPassword = async (plainPassword: string, hashedPassword: string) => {
 export const handlelogin = async (loginInfo: LoginBody) => {
     const userAccount = await getUser(loginInfo.username)
     if (userAccount === null) {
-        return 0
+        return false
     }
     const validLogin = await checkPassword(loginInfo.password, userAccount.password)
 
