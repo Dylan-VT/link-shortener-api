@@ -89,9 +89,13 @@ server.get<{Params: IRequestUrl}>('/url/:key', async (request, response) => {
 })
 
 //gets links for a specific user
-server.get<{Params: IRequestUserLinks}>('/getlinks/:user', async (request, response) => {
+server.get('/getlinks', async (request, response) => {
     //read link params
-    const user: string = request.params.user
+    const user: string = request.session.get("user")
+
+    if (!user) {
+        return 400
+    }
     // verify user is valid and that user matches session user
     console.log(user)
     if (!user) {
@@ -126,7 +130,7 @@ server.post<{Querystring: IShortenUrl}>('/shorten', async (request, response) =>
     //insert link and return result
     const insertResult = await insertLink(user, key, urlToShorten)
     
-    return insertResult
+    return insertResult[0]
     
 })
 
@@ -161,6 +165,10 @@ server.post<{Body: CreateAccountBody}>('/createaccount', async (request, respons
 //simply checks if a user is logged in
 server.get('/auth', async (request, response) => {
     return {loggedIn: request.session.get("loggedIn") || false, username: request.session.get("user")}  
+})
+
+server.get('/logout', async (request, response) => {
+    request.session.destroy()
 })
 
 
